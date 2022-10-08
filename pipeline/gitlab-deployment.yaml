@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab-deployment
+  labels:
+    app: gitlab
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: gitlab
+  template:
+    metadata:
+      labels:
+        app: gitlab
+    spec:
+      containers:
+      - name: gitlab
+        image: gitlab-ee:15.4.2-ee.0
+        environment:
+          GITLAB_OMNIBUS_CONFIG: |
+            external_url 'https://gitlab.example.com'        
+        volumes:
+          - '$GITLAB_HOME/config:/etc/gitlab'
+          - '$GITLAB_HOME/logs:/var/log/gitlab'
+          - '$GITLAB_HOME/data:/var/opt/gitlab'
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        - containerPort: 22
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        shm_size: '256m'
+        livenessProbe:
+          httpGet:
+            path: /
+            port: {{ .Values.service.internalPort }}
+          initialDelaySeconds: 15
+          timeoutSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /
+            port: {{ .Values.service.internalPort }}
+          initialDelaySeconds: 5
+          timeoutSeconds: 3
+        startupProbe:
+          exec:
+              command:
+              - cat
+              - /etc/hostname
+          periodSeconds: 10
+          failureThreshold: 10
