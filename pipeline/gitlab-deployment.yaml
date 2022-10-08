@@ -14,6 +14,7 @@ spec:
       labels:
         app: gitlab
     spec:
+      serviceAccount: gitlab-service-account
       containers:
       - name: gitlab
         image: gitlab-ee:15.4.2-ee.0

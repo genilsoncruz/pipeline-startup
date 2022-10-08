@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gitlab-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: gitlab
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: ubuntu
+    - namespaceSelector:
+        matchLabels:
+          ns: gitlab
+    ports:
+    - port: 80
+      protocol: TCP
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: ubuntu
+    - namespaceSelector:
+        matchLabels:
+          ns: gitlab
+    ports:
+    - port: 80
+      protocol: TCP
