@@ -5,7 +5,8 @@ metadata:
   labels:
     app: gitlab
 spec:
-  replicas: 3
+  replicas: 2
+  revisionHistoryLimit: 0
   selector:
     matchLabels:
       app: gitlab
@@ -18,17 +19,32 @@ spec:
       containers:
       - name: gitlab
         image: gitlab-ee:15.4.2-ee.0
+        
         environment:
           GITLAB_OMNIBUS_CONFIG: |
             external_url 'https://gitlab.example.com'        
+        
+        volumeMounts:
+          - mountPath: /data/db
+            name: mongodb-data
+        
         volumes:
-          - '$GITLAB_HOME/config:/etc/gitlab'
-          - '$GITLAB_HOME/logs:/var/log/gitlab'
-          - '$GITLAB_HOME/data:/var/opt/gitlab'
+          - name: mongodb-data
+        #    persistentVolumeClaim:
+        #      claimName: mongodb-cloud-pvc
+            hostPath:
+              path: /volumes/mongodb
+        
+        #volumes:
+        #  - '$GITLAB_HOME/config:/etc/gitlab'
+        #  - '$GITLAB_HOME/logs:/var/log/gitlab'
+        #  - '$GITLAB_HOME/data:/var/opt/gitlab'
+        
         ports:
         - containerPort: 80
         - containerPort: 443
         - containerPort: 22
+        
         resources:
           requests:
             memory: "64Mi"
@@ -36,7 +52,9 @@ spec:
           limits:
             memory: "128Mi"
             cpu: "500m"
+
         shm_size: '256m'
+
         livenessProbe:
           httpGet:
             path: /
@@ -56,3 +74,24 @@ spec:
               - /etc/hostname
           periodSeconds: 10
           failureThreshold: 10
+
+        initContainers:
+          - name: init
+            image: kubedevio/ubuntu-curl:v1
+            command: ["curl", "-X", "POST", "http://pruu.herokuapp.com/dump/initcontainer"]
+
+        lifecycle:
+          postStart:            
+            exec:
+              command:
+                - "curl"
+                - "-X"
+                - "POST"
+                - "http://pruu.herokuapp.com/dump/lifecyclestart"
+          preStop:
+            exec:
+              command:
+                - "curl"
+                - "-X"
+                - "POST"
+                - "http://pruu.herokuapp.com/dump/lifecyclestop"

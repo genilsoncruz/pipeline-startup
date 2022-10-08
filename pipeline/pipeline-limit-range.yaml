@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: pipeline-limit-range
+spec:
+  limits:
+    - max: 
+        cpu: "900m"
+        memory: "1Gi"        
+      min: 
+        cpu: "150m"
+        memory: "99Mi"
+      default:
+        cpu: "250m"
+        memory: "128Mi"
+      defaultRequest:
+        cpu: "150m"
+        memory: "100Mi"
+      type: Container
+      #type: Pod
+      #type: Volume
